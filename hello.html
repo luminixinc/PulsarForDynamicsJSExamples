@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Pulsar365 JS Hello World</title>
+    <script type="text/javascript">
+
+        /* *******************************************************************
+         * The Pulsar365 Javascript Bridge object
+         *  - See window.onload below for how this is initialized
+         *
+         * bridge.sendRequest(requestData,       // request data (see wiki and example for usage)
+         *                    responseCallbackFn // async callback function to receive response data
+         *                   )
+         *
+         * bridge.addHandler(handlerName,        // notification name (see wiki and examples for usage)
+         *                   handlerCallbackFn   // async callback function to handle notification data
+         *                  )
+         *
+         * bridge.removeHandler(handlerName)     // remove notification handler
+         * *******************************************************************/
+        var bridge = undefined;
+
+        var docNode = 'window.document';
+        var platform = 'unknown';
+        var refObjectId = undefined;
+
+        /*
+         * Helper function to extract URL query variables
+         */
+        function getQueryVariable(variable) {
+            const query = window.location.search.substring(1);
+            const vars = query.split("&");
+            for (var i = 0; i < vars.length; i++) {
+                const pair = vars[i].split("=");
+                if (pair[0] == variable) {
+                    return pair[1];
+                }
+            }
+        }
+
+        /*
+         * Helper function to pretty-print data as JSON
+         */
+        function stringify(obj) {
+            return JSON.stringify(obj, null, 4);
+        }
+
+        /*
+         * Entry point to Pulsar365 Web UI
+         */
+        window.onload = function () {
+            if ((window.top !== window.self) && window.parent.pulsar) {
+                // Embedded in iframe?
+                docNode = 'window.iFrame.contentWindow.document';
+                bridge = window.parent.pulsar.bridge;
+                startApp();
+            }
+            else if (window.pulsar) {
+                // Called from another custom HTML?
+                bridge = window.pulsar.bridge;
+                startApp();
+            }
+            else {
+                // Launched stand-alone, startApp() on the bridge ready event
+                document.addEventListener('WebViewJavascriptBridgeReady', function(event) {
+                    bridge = event.bridge;
+                    window.pulsar = {};
+                    pulsar.bridge = event.bridge; // save initial bridge (for propagation to other pages)
+                    startApp();
+                }, false);
+            }
+        };
+
+        function startApp() {
+            // if launched from a record, this is the object Id in question
+            refObjectId = getQueryVariable('ref_id');
+
+            // what environment are we running on?
+            getPlatform();
+
+            // what user are we running on behalf of?
+            getUserInfo();
+
+            // populate inital sync status
+            getSyncInfo();
+        }
+
+        function getPlatform() {
+            var request = {};
+            var obj = {};
+            request["type"] = 'getPlatform';
+            request["data"] = obj;
+            bridge.sendRequest(request, function(responseData) {
+                console.log('platformInfo: ' + stringify(responseData));
+
+                const userInfoBody = document.getElementById("PlatformInfoBody");
+
+                if (responseData.type === "getPlatformResponse") {
+                    platformStr = 'Running on the ' + responseData.data + ' platform';
+                    if (refObjectId) {
+                        platformStr += ', launched from record: ' + refObjectId;
+                    }
+                    console.log(platformStr);
+                    userInfoBody.innerHTML = platformStr;
+                } else {
+                    console.assert(responseData.type == 'error');
+                    var errStr = responseData.data;
+                    console.log('A problem occurred:\n' + errStr);
+                    console.log('Couldnt get platform!');
+                    userInfoBody.innerHTML = stringify(responseData.data);
+                }
+            });
+        }
+
+        function getUserInfo() {
+            var request = {};
+            var obj = {};
+            request["type"] = 'userInfo';
+            request["data"] = obj;
+            bridge.sendRequest(request, function(responseData) {
+                console.log('userInfo: ' + stringify(responseData));
+
+                const userInfoBody = document.getElementById("UserInfoBody");
+
+                if (responseData.type === "userInfoResponse") {
+                    userInfoBody.innerHTML = stringify(responseData.data);
+                } else {
+                    console.assert(responseData.type == 'error');
+                    const errStr = responseData.data;
+                    console.log('A problem occurred:\n' + errStr);
+                    userInfoBody.innerHTML = stringify(responseData.data);
+                }
+            });
+        }
+
+        function getSyncInfo() {
+            var request = {};
+            var obj = {};
+            request["type"] = 'syncInfo';
+            request["data"] = obj;
+            bridge.sendRequest(request, function(responseData) {
+                console.log('syncInfo: ' + stringify(responseData));
+
+                const syncInfoBody = document.getElementById("SyncInfoBody");
+
+                if (responseData.type === "syncInfoResponse") {
+                    syncInfoBody.innerHTML = stringify(responseData.data);
+                } else {
+                    console.assert(responseData.type == 'error');
+                    const errStr = responseData.data;
+                    console.log('A problem occurred:\n' + errStr);
+                    syncInfoBody.innerHTML = stringify(responseData.data);
+                }
+            });
+        }
+
+    </script>
+
+</head>
+<body>
+    <h1>Pulsar365 JS Hello World</h1>
+
+    <div class="container">
+
+        <div class="panel-heading">
+            Platform Info<br/>
+        </div>
+        <div class="panel-body" id="PlatformInfoBody"></div>
+
+        <hr/>
+
+        <div class="panel-heading">
+            User Info<br/>
+        </div>
+        <div class="panel-body" id="UserInfoBody"></div>
+
+        <hr/>
+
+        <div class="panel-heading">
+            Sync Info<br/>
+        </div>
+        <div class="panel-body" id="SyncInfoBody">(No sync info)</div>
+
+        <hr/>
+
+    </div>
+
+</body>
+</html>
