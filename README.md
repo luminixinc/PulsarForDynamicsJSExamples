@@ -29,14 +29,6 @@ This repository contains canonical example code of the HTML/CSS/Javascript inter
 
 A simple, self-contained, "hello world" example that exercises the Pulsar Javascript API.  Performs some simple queries and prints out the results.
 
-### `helloembed.html`
-
-Similar to `hello.html` example, but launches another document/app within an iframe.  This document can also make API calls into Pulsar.
-
-### `hellosync.html`
-
-Similar to `hello.html` example, but also sets up to monitor sync process updates.  Homework assignment: Suppress the main Pulsar sync banner using the appropriate Pulsar Setting and implement your own sync banner in HTML/CSS Javascript! ;)
-
 Contributing
 ------------
 
